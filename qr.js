@@ -1,5 +1,4 @@
 const fs = require('fs');
-const qrcode = require('qrcode-terminal')
 const { Client, LocalAuth } = require('whatsapp-web.js');
 
 const clientId = 'Kenz01'
@@ -16,7 +15,6 @@ const client = new Client({authStrategy: Id, puppeteer: { headless: false, args:
     '--no-zygote',
     '--disable-gpu'
     ]}});
-client.on('qr', qr => qrcode.generate(qr,{small: true}))
 client.on('authenticated', () => {console.log('AUTHENTICATED')});
 client.on('ready', () => console.log('connected... \nand this a massage from the user: '));
 

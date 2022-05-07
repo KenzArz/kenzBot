@@ -1,16 +1,25 @@
 const ytdl = require('ytdl-core');
 const fs = require('fs');
 
-class yt {
-    async ytmp4(m) {
-        const dl = `http://www.youtube.com/watch?v=QveuPhimQEM`
-        const detail = await ytdl.getInfo(dl)
-        dl.on('info', (info, format) => console.log(format.contentLength))
-            
-    }
-    async ytmp3(m) {
 
-    }
+async function ytmp3 (vid, m, link) {
+    const mp3 = 'https://www.youtube.com/watch?v='+ vid
+    const ytInfo = await ytdl.getInfo(mp3)
+
+    const {videoDetails} = ytInfo
+    const chat = await m.getChat()
+    const img = await link(videoDetails.thumbnails[4].url)
+    chat.sendMessage(img, {caption: `data didapatkan, memulai mencovert file. \n\nauthor: ${videoDetails.ownerChannelName}\nTitle/Judul: ${videoDetails.title}`})
+
+    const filePath = `resource/mp3Yt/${videoDetails.title}.mp3`
+    const media = await new Promise(resolve => {
+        ytdl(mp3, {filter: "audioonly"})
+            .pipe(fs.createWriteStream(filePath))
+            .on('finish', () => resolve(filePath))
+    })
+
+    
+    return {media, filePath}
 }
 
-new yt().ytmp4()
+module.exports = ytmp3

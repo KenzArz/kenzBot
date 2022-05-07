@@ -3,14 +3,17 @@ const { bot} = require('./Message.js');
 const {client}  = require('./qr.js');
 const { MessageMedia} = require('whatsapp-web.js');
 const { wibu } = require('./weaboo.js')
-const {dwl} = require('./dwl/download.js');
+const {dwl} = require('./dwl/download');
+const mp3 = require('./resource/ytdl')
 const map = new Map()
+const dl = require('ytdl-core')
+const fs = require('fs');
 const sameMessage = {}
 const owner = 'fitur ini hanya bisa digunakan oleh owner'
 
 client.on('message', async m => {
 
-    
+
 
     // //MENGIRIM JADWAL
     // if (m.body.startsWith('!jadwal', 0)) {
@@ -54,26 +57,19 @@ client.on('message', async m => {
         return
     }
 
-    //DOWNLOAD VIDEO YOUTUBE
-    if (m.body.startsWith('!ytmp4')) {
+    //DOWNLOAD VIDEO YOUTUBE MENJADI MP3
+    if(m.body.startsWith('!ytmp3')){
         const url = m.body.slice(24)
-        const yt = await bot.ytmp4(url, m)
-        const { videoDetails: { ownerChannelName, title } } = yt.detail
+        const yt = await mp3(url, m, MessageMedia.fromUrl)
+        const {  filePath, media  } = yt
         const chat = await m.getChat()
-        chat.sendMessage(yt.yt, { caption: `judul: ${title} \nchannel: ${ownerChannelName}` })
-        return}
-        
-    else if(m.body.startsWith('!ytmp3')){
-        const url = m.body.slice(24)
-        const yt = await bot.ytmp3(url, m)
-        const { videoDetails: { ownerChannelName, title } } = yt.detail
-        const chat = await m.getChat()
-        chat.sendMessage(yt.yt, { caption: `judul: ${title} \nchannel: ${ownerChannelName}` })
+        chat.sendMessage( MessageMedia.fromFilePath(media), {sendMediaAsDocument: true})
+        fs.rmSync(filePath, {recursive: true})
         return
     }
     
 
-    if(m.body == '!sticker'){m.reply(await dwl.download(m), null, {sendMediaAsSticker: true}); return}
+    if(m.body == '!sticker'){m.reply(await dwl.download(m), null, {sendMediaAsSticker: true, stickerAuthor: 'Kenz'}); return}
 
 
     //SET KUIS
