@@ -7,17 +7,15 @@ async function ytmp3 (vid, m, link) {
     const ytInfo = await ytdl.getInfo(mp3)
 
     const {videoDetails} = ytInfo
-    const chat = await m.getChat()
     const img = await link(videoDetails.thumbnails[4].url)
-    chat.sendMessage(img, {caption: `data didapatkan, memulai mencovert file. \n\nauthor: ${videoDetails.ownerChannelName}\nTitle/Judul: ${videoDetails.title}`})
+    m.reply(img, {caption: `data didapatkan, memulai mencovert file. \n\nauthor: ${videoDetails.ownerChannelName}\nTitle/Judul: ${videoDetails.title}`})
 
-    const filePath = `resource/mp3Yt/${videoDetails.title}.mp3`
+    const filePath = `resource/${videoDetails.title}.mp3`
     const media = await new Promise(resolve => {
         ytdl(mp3, {filter: "audioonly"})
             .pipe(fs.createWriteStream(filePath))
             .on('finish', () => resolve(filePath))
     })
-
     
     return {media, filePath}
 }
