@@ -1,27 +1,53 @@
 const chalk = require('chalk');
 const { bot} = require('./Message.js');
 const {client}  = require('./qr.js');
-const { MessageMedia} = require('whatsapp-web.js');
+const { MessageMedia, Buttons, List} = require('whatsapp-web.js');
 const { wibu } = require('./weaboo.js')
 const {dwl} = require('./dwl/download');
 const mp3 = require('./resource/ytdl')
 const map = new Map()
 const dl = require('ytdl-core')
 const fs = require('fs');
-const sameMessage = {}
-const owner = 'fitur ini hanya bisa digunakan oleh owner'
 
 client.on('message', async m => {
-
-
-
-    // //MENGIRIM JADWAL
-    // if (m.body.startsWith('!jadwal', 0)) {
-    //     const chat = await m.getChat()
-    //     const jadw = await Admin.jadwalSklh(m)
-    //     chat.sendMessage(jadw)
-    //     return
-    // };
+    
+    if(m.from == '6289530016712@c.us' || '62838914059445'){
+        if(m.body.startsWith('pr')){
+            const body = m.body.split(' ')
+            const [, mapel, tugas, hal, deadline] = body
+            const setPr = {mapel, tugas, hal, deadline}
+            bot.pr(pr => {
+                pr.push(setPr)
+                fs.writeFileSync('pr/pr.json',JSON.stringify(pr))
+            })
+        }
+        else if(m.body == 'list pr') {
+            bot.pr(pr => {
+                let listPr = ''
+                pr.forEach((m,i) => listPr += `mapel: ${m.mapel} \ntugas: ${m.tugas} \nhalaman: ${m.hal} \ndeadline: ${m.deadline}${(pr.length -1) == i ? '' : '\n\n'}` )
+                m.reply(listPr)
+            })
+        }
+        else if(m.body.startsWith('cari pr ')){
+            const mapel = m.body.split(' ')[2]
+            bot.pr(pr => {
+                const listPr = pr.filter(m => m.mapel == mapel)
+                console.log(listPr)
+                let Pr = ''
+                listPr.forEach((m,i) => Pr+= `mapel: ${m.mapel} \ntugas: ${m.tugas} \nhalaman: ${m.hal} \ndeadline: ${m.deadline}${(listPr.length -1) == i ? '' : '\n\n'}`)
+                m.reply(Pr)
+            })
+        }
+        else if(m.body.startsWith('deadline')){
+            const deadline = m.body.split(' ')[1]
+            bot.pr(pr => {
+                const listPr = pr.filter(m => m.deadline == deadline)
+                let Pr = ''
+                listPr.forEach((m,i)=> Pr+= `mapel: ${m.mapel} \ntugas: ${m.tugas} \nhalaman: ${m.hal} \ndeadline: ${m.deadline}${(listPr.length -1) == i ? '' : '\n\n'}`)
+                m.reply(Pr)
+            })
+        }
+    }
 
     // TEST SINYAL
     if (m.body == '!ping') {
@@ -33,6 +59,17 @@ client.on('message', async m => {
         });
         return
     };
+    //INVIT BOT
+    if(m.body.startsWith('!join')){
+        const invit = m.body.slice(31)
+        try{
+            await client.acceptInvite(invit)
+            m.reply('joined the group')
+        }
+        catch(e){
+            console.log(e)
+        }
+    }
 
     //SEARCH ANIME
     if (m.body.startsWith('!search')) {
@@ -63,11 +100,10 @@ client.on('message', async m => {
         const yt = await mp3(url, m, MessageMedia.fromUrl)
         const {  filePath, media  } = yt
         const chat = await m.getChat()
-        chat.sendMessage( MessageMedia.fromFilePath(media), {sendMediaAsDocument: true})
+        chat.sendMessage( MessageMedia.fromFilePath(media))
         fs.rmSync(filePath, {recursive: true})
         return
     }
-    
 
     if(m.body == '!sticker'){m.reply(await dwl.download(m), null, {sendMediaAsSticker: true, stickerAuthor: 'Kenz'}); return}
 
@@ -78,7 +114,8 @@ client.on('message', async m => {
         const [, body, detail, plus] = get
         if(!body){
             let getBody = ''
-            await bot.materi(m => {
+            await bot.materi
+            (m => {
                 const mapel = m.map(n => n.mapel)
                 mapel.forEach(i => getBody += `${i} \n`)
             })
@@ -92,8 +129,8 @@ client.on('message', async m => {
                 mapel.materi.forEach(i => getDetail += `${i} \n`)
             })
             m.reply(`berikut daftar materi yang tersedia untuk kuis ${body}: \n\n${getDetail} \n*contoh penggunaan*:\n_!kuis *mapel materi*_\n!kuis matWajib fungsi linear`); return}
-
-        map.set(m.from, {kuis: await bot.kuis( body, `${detail} ${plus? plus : ''}`)})
+        const chat = await m.getChat()
+        !chat.isGroup ? map.set(m.from, {kuis: await bot.kuis( body, `${detail} ${plus? plus : ''}`)}) : ''
 
     }
 
@@ -108,7 +145,11 @@ client.on('message', async m => {
         startKuis.quiz == '*SALAH*' ? m.reply(`${startKuis.quiz} \nskor : ${get.kuis.skor}`) : ''
 
         if(startKuis.task === undefined){chat.sendMessage('kuis telah selesai. Terimakasih sudah mengerjakan kuis'); map.delete(m.from); return}
-        chat.sendMessage(`*SOAL ${++get.kuis.soal}* \n\n${startKuis.task.soal} `)
+        // chat.sendMessage(`*SOAL ${++get.kuis.soal}* \n\n${startKuis.task.soal} `);
+        const sections = [{title: 'judul', rows: [{title: 'a'}, {title: 'b'},{title: 'c'},{title: 'd'},{title: 'e'}]}]
+        const list = new List(`${startKuis.task.soal} `, 'jawaban', sections, `*SOAL ${++get.kuis.soal}*`, 'KenzBot')
+        client.sendMessage(m.from, list)
+        console.log(startKuis.task)
         return
     }
 

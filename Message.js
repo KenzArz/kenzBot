@@ -19,19 +19,8 @@ class Bot {
         return array[rdm]
     };
 
-    materi = async cb => cb(JSON.parse(fs.readFileSync(`Mapel/mapel.json`)))
-    
-
-    /**
-     * 
-     * @param {Number} body
-     * @returns {Promise<{code: daftarMateriMapel, result: Mapel}>}
-     */
-    async getDetail(body){
-        let code = ''
-        result.materi.forEach(m => code += m + '\n')
-        return code
-    };
+    async materi(cb){ console.log(JSON.parse(fs.readFileSync(`Mapel/mapel.json`)))}
+    async pr(cb) {cb(JSON.parse(fs.readFileSync(`pr/pr.json`)))}
 
     /**
      * 
@@ -81,11 +70,7 @@ class Bot {
         return map.get(m.from)
     }
 
-    /**
-     * 
-     * @param {Base64} m
-     * @returns {Promise<{yt: YtDowmload, detail: DetailVideo}>}
-     */
+    
 
 }
 
