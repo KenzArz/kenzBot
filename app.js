@@ -8,44 +8,90 @@ const mp3 = require('./resource/ytdl')
 const map = new Map()
 const dl = require('ytdl-core')
 const fs = require('fs');
+const { MessagePort } = require('worker_threads');
+
+let kuis;
 
 client.on('message', async m => {
     
     if(m.from == '6289530016712@c.us' || '62838914059445'){
-        if(m.body.startsWith('pr')){
-            const body = m.body.split(' ')
-            const [, mapel, tugas, hal, deadline] = body
-            const setPr = {mapel, tugas, hal, deadline}
-            bot.pr(pr => {
+        bot.pr(pr => {
+            const daftarPr = pr.length == 0
+
+            if(m.body == 'pr help'){
+                m.reply(`daftar list untuk pr \n\n[!pr] [mapel] [tugas] [halaman] [deadline] [id] \nuntuk menambahkan pr baru \n\n[!list pr] \nuntuk menampilkan seluruh pr yang masih ada \n\n[!cari pr] \nmencari pr berdasarkan mapel \n\n[!deadline] \nmencari pr berdasarkan deadline \n\n [!rm pr] [prefik mapel/id] [mapel/id] \nmenghapus berdasarkan mapel/id \n\n\nmasukan command tanpa menggunakan simbol []\n\n*NOTE*: jangan menambahkan spasi pada [mapel]/[tugas]/[id] karna akan mengacaukan cara kerja bot.\ncontoh penggunaan: *_pr matwajib fungsi_linear 19 rabu tugas_matminat01_* \n\njika menghapus pr bedasarkan mapelnya, perlu diingat bahwa menghapus berdasarkan mapel akan menghapus seluruh pr yang mempunyai mapel yang sama`);
+                return
+            }
+            else if(m.body.startsWith('pr')){
+
+                const body = m.body.split(' ')
+                const [, mapel, tugas, hal, deadline, id] = body
+                if(!mapel){
+                    m.reply('masukan pr dengan urutan [mapel] [tugas] [halaman] [deadline] [id] \n\nmasukan pr tanpa menggunakan simbol []')
+                    return
+                }
+                const setPr = {mapel, tugas, hal, deadline, id}
                 pr.push(setPr)
-                fs.writeFileSync('pr/pr.json',JSON.stringify(pr))
-            })
-        }
-        else if(m.body == 'list pr') {
-            bot.pr(pr => {
+                fs.writeFileSync('school/pr.json',JSON.stringify(pr))
+                m.reply('data berhasil ditambahkan')
+                return
+            }
+            else if(m.body == 'list pr') {
+                if(daftarPr){m.reply('tidak ada pr');return}
+
                 let listPr = ''
-                pr.forEach((m,i) => listPr += `mapel: ${m.mapel} \ntugas: ${m.tugas} \nhalaman: ${m.hal} \ndeadline: ${m.deadline}${(pr.length -1) == i ? '' : '\n\n'}` )
+                pr.forEach((m,i) => listPr += `mapel: ${m.mapel} \ntugas: ${m.tugas} \nhalaman: ${m.hal} \ndeadline: ${m.deadline} \nid: ${m.id} ${(pr.length -1) == i ? '' : '\n\n'}` )
                 m.reply(listPr)
-            })
-        }
-        else if(m.body.startsWith('cari pr ')){
-            const mapel = m.body.split(' ')[2]
-            bot.pr(pr => {
+            }
+            else if(m.body.startsWith('cari pr ')){
+                if(daftarPr){m.reply('tidak ada pr');return}
+
+                const mapel = m.body.split(' ')[2]
                 const listPr = pr.filter(m => m.mapel == mapel)
-                console.log(listPr)
                 let Pr = ''
                 listPr.forEach((m,i) => Pr+= `mapel: ${m.mapel} \ntugas: ${m.tugas} \nhalaman: ${m.hal} \ndeadline: ${m.deadline}${(listPr.length -1) == i ? '' : '\n\n'}`)
                 m.reply(Pr)
-            })
-        }
-        else if(m.body.startsWith('deadline')){
-            const deadline = m.body.split(' ')[1]
-            bot.pr(pr => {
+            }
+            else if(m.body.startsWith('deadline')){
+                if(daftarPr){m.reply('tidak ada pr');return}
+
+                const deadline = m.body.split(' ')[1]
                 const listPr = pr.filter(m => m.deadline == deadline)
                 let Pr = ''
                 listPr.forEach((m,i)=> Pr+= `mapel: ${m.mapel} \ntugas: ${m.tugas} \nhalaman: ${m.hal} \ndeadline: ${m.deadline}${(listPr.length -1) == i ? '' : '\n\n'}`)
                 m.reply(Pr)
-            })
+            }
+            else if(m.body.startsWith('rm pr')){
+                if(daftarPr){m.reply('tidak ada pr');return}
+
+                const rm = m.body.slice(6)
+                const [prefik, data] = rm.split(' ')
+
+                const rmPr = pr.find(m => m[prefik].toLowerCase() == data.toLowerCase())
+                if(!rmPr){m.reply('id tidak ditemuka'); return}
+                const addPr = pr.filter(m => m[prefik].toLowerCase() !== data.toLowerCase())
+                
+                fs.writeFileSync('school/pr.json', JSON.stringify(addPr))
+                m.reply('pr berhasil dihapus')
+            }
+        })
+
+
+        // MENAMBAHKAN KUIS BARU
+        if(m.body.startsWith('add kuis')){
+            const kuis = m.body.slice(9)
+            const body = kuis.split(' - ')
+            const quiz = body.filter(m => m !== 'mapel' && m !== 'materi' && m !== 'soal' && m !== 'jawaban' )
+            const [getmapel, getmateri, getsoal, getjawaban] = quiz
+            const addKuis = await bot.addKuis(getmapel)
+            await bot.createQuiz(getmateri, addKuis)
+            await bot.createQuizFile(getmapel, getmateri)
+            
+            const file = JSON.parse(fs.readFileSync(`Mapel/${getmapel}/${getmateri}.json`))
+
+            file.push({soal: getsoal, jawaban: getjawaban})
+            fs.writeFileSync(`Mapel/${getmapel}/${getmateri}.json`, JSON.stringify(file))
+            return
         }
     }
 
@@ -100,13 +146,12 @@ client.on('message', async m => {
         const yt = await mp3(url, m, MessageMedia.fromUrl)
         const {  filePath, media  } = yt
         const chat = await m.getChat()
-        chat.sendMessage( MessageMedia.fromFilePath(media))
+        chat.sendMessage( MessageMedia.fromFilePath(media), {sendMediaAsDocument: true})
         fs.rmSync(filePath, {recursive: true})
         return
     }
 
     if(m.body == '!sticker'){m.reply(await dwl.download(m), null, {sendMediaAsSticker: true, stickerAuthor: 'Kenz'}); return}
-
 
     //SET KUIS
     if(m.body.startsWith('!kuis')){
@@ -149,7 +194,6 @@ client.on('message', async m => {
         const sections = [{title: 'judul', rows: [{title: 'a'}, {title: 'b'},{title: 'c'},{title: 'd'},{title: 'e'}]}]
         const list = new List(`${startKuis.task.soal} `, 'jawaban', sections, `*SOAL ${++get.kuis.soal}*`, 'KenzBot')
         client.sendMessage(m.from, list)
-        console.log(startKuis.task)
         return
     }
 

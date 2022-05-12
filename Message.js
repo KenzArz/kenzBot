@@ -19,8 +19,75 @@ class Bot {
         return array[rdm]
     };
 
-    async materi(cb){ console.log(JSON.parse(fs.readFileSync(`Mapel/mapel.json`)))}
-    async pr(cb) {cb(JSON.parse(fs.readFileSync(`pr/pr.json`)))}
+    async materi(cb){
+
+        const dirPath = 'Mapel'
+            if(!fs.existsSync(dirPath)){
+                fs.mkdirSync(dirPath)
+            }
+
+        const filePath = 'Mapel/mapel.json'
+        if(!fs.existsSync(filePath)){
+            fs.writeFileSync(filePath, '[]', 'utf8')
+        }
+        cb(JSON.parse(fs.readFileSync(`Mapel/mapel.json`)))
+    }
+    async pr(cb) {
+
+        const dirPath = 'school'
+            if(!fs.existsSync(dirPath)){
+                fs.mkdirSync(dirPath)
+            }
+
+        const filePath = 'school/pr.json'
+        if(!fs.existsSync(filePath)){
+            fs.writeFileSync(filePath, '[]', 'utf8')
+        }
+
+        cb(JSON.parse(fs.readFileSync(`school/pr.json`)))
+    }
+
+
+    async addKuis(getmapel){
+        const mapel = await new Promise(resolve => {
+            this.materi(materi => {
+                const findMapel = materi.find(m => m.mapel.toLowerCase() == getmapel.toLowerCase())
+                if(findMapel){resolve(findMapel); return}
+                resolve({mapel: getmapel, materi: []})
+            })
+        })
+        return mapel
+        
+    }
+    async createQuiz(data, filename) {
+        const {mapel, materi} = filename
+        this.materi(async quiz => {
+            const getmateri = materi.find(m => m == data)
+            if(getmateri){return}
+            materi.push(data)
+            const getmapel = quiz.filter(m => m.mapel !== mapel)
+            
+            getmapel.push({mapel, materi})
+            
+            fs.writeFileSync('Mapel/mapel.json',  JSON.stringify(getmapel))
+        })
+        return 
+    }
+
+    async createQuizFile(mapel, materi){
+        const dirPath = `Mapel/${mapel}`
+        if(!fs.existsSync(dirPath)){
+            fs.mkdirSync(dirPath)
+        }
+        const filePath = `${dirPath}/${materi}.json`
+        if(!fs.existsSync(filePath)){
+            fs.writeFileSync(filePath, '[]','utf-8')
+        }
+    }
+
+    async addQuiz(){
+
+    }
 
     /**
      * 

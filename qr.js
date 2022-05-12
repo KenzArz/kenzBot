@@ -7,7 +7,7 @@ const Id = new LocalAuth({clientId})
 const worker = `${Id.dataPath}/session-${clientId}/Default/Service Worker`
 if(fs.existsSync(worker)){fs.rmdirSync(worker, {recursive: true})}
 
-const client = new Client({authStrategy: Id, puppeteer: { headless: true, args: [
+const client = new Client({authStrategy: Id, puppeteer: { headless: false, args: [
     '--no-sandbox',
     '--disable-setuid-sandbox',
     '--disable-dev-shm-usage',
