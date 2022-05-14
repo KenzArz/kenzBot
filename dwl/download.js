@@ -4,6 +4,7 @@ class media {
         img = await m.downloadMedia()
         const qt = await m.getQuotedMessage()
         if (m.hasQuotedMsg) { img = await qt.downloadMedia() }
+        
         return img
     }
 }
