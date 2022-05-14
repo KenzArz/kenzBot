@@ -1,5 +1,5 @@
 const chalk = require('chalk');
-const { bot} = require('./Message.js');
+const  bot = require('./Message.js');
 const {client}  = require('./qr.js');
 const { wibu } = require('./weaboo.js')
 const {dwl} = require('./dwl/download');
@@ -90,6 +90,7 @@ client.on('message', async m => {
 
             // dan menulis kembali isi file dari getmapel/getmateri yang sudah dibuat
             fs.writeFileSync(filePath, JSON.stringify(file))
+            m.reply('kuis berhasil ditambahkan, cek kuis menggunakan !list kuis menu')
             return
         }
     }
@@ -153,15 +154,13 @@ client.on('message', async m => {
 
     //SET KUIS
     if(m.body.startsWith('!kuis')){
+        
         const get = m.body.split(' ')
         const [, body, detail] = get
         if(!body){
             let getBody = ''
             await bot.materi
-            (m => {
-                const mapel = m.map(n => n.mapel)
-                mapel.forEach(i => getBody += `${i} \n`)
-            })
+            (m => m.forEach(i => getBody += `${i.mapel} \n`))
             m.reply(`berikut daftar mapel yang tersedia untuk kuis \n\n${getBody} \n*contoh penggunaan*:\n!kuis matWajib`)
             return}
 
@@ -174,7 +173,30 @@ client.on('message', async m => {
             m.reply(`berikut daftar materi yang tersedia untuk kuis ${body}: \n\n${getDetail} \n*contoh penggunaan*:\n!kuis matWajib fungsi linear`); return
         }
         map.set(m.from, await bot.kuis( body, detail)) 
-
+    }
+    else if(m.body == '!list kuis menu'){
+        let menu = 'daftar mapel dan materi: \n\n'
+        bot.materi(mtr => {
+            if(mtr.length == 0){m.reply('tidak tersedia mapel maupun materi untuk dijadikan kuis, ketik add kuis untuk menambahkan kuis (owner only)')}
+            mtr.forEach(m => {
+                menu += `*MAPEL: ${m.mapel}*\n`
+                m.materi.forEach(i => menu += `${i}\n\n`)
+            })
+        })
+        m.reply(menu + 'ketik !kuis [mapel] [materi] \n\ncontoh penggunaan: \n!kuis matwajib fungsi_linear ')
+        return
+    }
+    else if(m.body.startsWith('!list materi')) {
+        const mapelMateri = m.body.split(' ')[2]
+        bot.materi(mtr => {
+            const materiList = mtr.find(i => i.mapel == mapelMateri)
+            const {mapel, materi} = materiList
+            let menu =  `*MAPEL: ${mapel}\n`
+            materi.forEach(m => menu += `${m}\n\n`)
+            console.log(menu)
+            m.reply(menu + 'ketik !kuis [mapel] [materi] \n\ncontoh penggunaan: \n!kuis matwajib fungsi_linear')
+        })
+        return
     }
     
     if(map.has(m.from)){

@@ -227,6 +227,4 @@ class Bot {
 
 }
 
-module.exports = {
-    bot: new Bot()
-}
+module.exports = new Bot()
