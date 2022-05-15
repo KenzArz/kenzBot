@@ -58,6 +58,9 @@ class Bot {
             if(!mapel){
                 return 'masukan pr dengan urutan [mapel] [tugas] [halaman] [deadline] [id] \n\nmasukan pr tanpa menggunakan simbol []'
             }
+            if(!id){
+                return 'silahkan masuka data pr secara detail dengan urutan [mapel] [tugas] [halaman] [deadline] [id]'
+            }
             const setPr = {mapel, tugas, hal, deadline, id}
             pr.push(setPr)
             fs.writeFileSync('school/pr.json',JSON.stringify(pr))
@@ -67,7 +70,16 @@ class Bot {
             if(daftarPr){return 'tidak ada pr'}
 
             let listPr = ''
-            pr.forEach((m,i) => listPr += `mapel: ${m.mapel} \ntugas: ${m.tugas} \nhalaman: ${m.hal} \ndeadline: ${m.deadline} \nid: ${m.id} ${(pr.length -1) == i ? '' : '\n\n'}` )
+            pr.forEach((m,i) => listPr += `*「${m.mapel}」*
+            
+┌──────────────➤
+
+➪ *TUGAS: ${m.tugas}*
+➪ *HALAMAN: ${m.hal}*
+➪ *DEADLINE: ${m.deadline}*
+➪ *ID: ${m.id}*
+
+└──────────────➤ ${(pr.length -1) == i ? '' : '\n\n\n'}`)
             return listPr
         }
         const findMapel = async m => {
@@ -76,7 +88,16 @@ class Bot {
             const mapel = m.body.split(' ')[2]
             const listPr = pr.filter(m => m.mapel == mapel)
             let Pr = ''
-            listPr.forEach((m,i) => Pr+= `mapel: ${m.mapel} \ntugas: ${m.tugas} \nhalaman: ${m.hal} \ndeadline: ${m.deadline}${(listPr.length -1) == i ? '' : '\n\n'}`)
+            listPr.forEach((m,i) => Pr+= `*「${m.mapel}」*
+            
+┌──────────────➤
+            
+➪ *TUGAS: ${m.tugas}*
+➪ *HALAMAN: ${m.hal}*
+➪ *DEADLINE: ${m.deadline}*
+➪ *ID: ${m.id}*
+            
+└──────────────➤ ${(listPr.length -1) == i ? '' : '\n\n\n'}`)
             return Pr
         }
         const findMapelBYDeadline = async m => {
@@ -85,7 +106,16 @@ class Bot {
             const deadline = m.body.split(' ')[1]
             const listPr = pr.filter(m => m.deadline == deadline)
             let Pr = ''
-            listPr.forEach((m,i)=> Pr+= `mapel: ${m.mapel} \ntugas: ${m.tugas} \nhalaman: ${m.hal} \ndeadline: ${m.deadline}${(listPr.length -1) == i ? '' : '\n\n'}`)
+            listPr.forEach((m,i)=> Pr+= `*「${m.mapel}」*
+            
+┌──────────────➤
+            
+➪ *TUGAS: ${m.tugas}*
+➪ *HALAMAN: ${m.hal}*
+➪ *DEADLINE: ${m.deadline}*
+➪ *ID: ${m.id}*
+            
+└──────────────➤ ${(listPr.length -1) == i ? '' : '\n\n\n'}`)
             return Pr
         }
         const removePr = async m => {
@@ -95,7 +125,7 @@ class Bot {
             const [prefik, data] = rm.split(' ')
 
             const rmPr = pr.find(m => m[prefik].toLowerCase() == data.toLowerCase())
-            if(!rmPr){m.reply('id tidak ditemuka'); return}
+            if(!rmPr){m.reply('mapel atau id tidak ditemukan'); return}
             const addPr = pr.filter(m => m[prefik].toLowerCase() !== data.toLowerCase())
             
             fs.writeFileSync('school/pr.json', JSON.stringify(addPr))
@@ -184,7 +214,6 @@ class Bot {
     async kuis(data, detail){
         const file = JSON.parse(fs.readFileSync(`Mapel/${data}/${detail}/${detail}.json`))
         let skor = 0
-        
         /**
          * @returns {object} mengambil object di dalam array dan mengacak indexnya
          */

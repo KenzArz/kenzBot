@@ -48,7 +48,8 @@ client.on('message', async m => {
         // MENAMBAHKAN KUIS BARU
         if(m.body.startsWith('add kuis')){
             if(m.body == 'add kuis help'){
-                m.reply('cara menambahkan kuis: \n\n[mapel]\ndi isi dengan nama mapel \n\n[materi]\nmateri dari mapel \n\n[nsoal]\nsoal yang ingin ditambahkan\n\n[jawaban]\njawaban dari kuis \n\n*_cara penggunaan_*: \nadd kuis matwajib - fungsi linear - 1 + 1 = \na. 10\nb.11\nc.2\nd.1\ne.semua jawaban benar - c <--(itu jawaban)')
+                m.reply('cara menambahkan kuis: \n\n[mapel]\ndi isi dengan nama mapel \n\n[materi]\nmateri dari mapel \n\n[soal]\nsoal yang ingin ditambahkan\n\n[jawaban]\njawaban dari kuis \n\n*_cara penggunaan_*: \nadd kuis matwajib - fungsi linear - 1 + 1 = \na. 10\nb.11\nc.2\nd.1\ne.semua jawaban benar - c <--(itu jawaban)')
+                return
             }
             //menghapus "add kuis"
             const kuis = m.body.slice(9)
@@ -57,9 +58,10 @@ client.on('message', async m => {
             const qt = await m.getQuotedMessage()
             let image;
             if(m.hasMedia || m.hasQuotedMsg){
-                image = await dwl.download(qt || m)
+                image = await dwl.download(m)
             }
             const [getmapel, getmateri, getsoal, getjawaban] = body
+            if(!getjawaban){m.reply('silahkan masuka data kuis secara detail dengan urutan [mapel] [materi] [soal] [jawaban]'); return}
 
             // membuat objek baru
             const addKuis = await bot.addKuis(getmapel)
@@ -175,26 +177,27 @@ client.on('message', async m => {
         map.set(m.from, await bot.kuis( body, detail)) 
     }
     else if(m.body == '!list kuis menu'){
-        let menu = 'daftar mapel dan materi: \n\n'
+        let menu = 'daftar mapel dan materi: \n'
         bot.materi(mtr => {
             if(mtr.length == 0){m.reply('tidak tersedia mapel maupun materi untuk dijadikan kuis, ketik add kuis untuk menambahkan kuis (owner only)')}
             mtr.forEach(m => {
-                menu += `*MAPEL: ${m.mapel}*\n`
-                m.materi.forEach(i => menu += `${i}\n\n`)
+                menu += `\n*MAPEL*: *${m.mapel}*\n`
+                m.materi.forEach(i => menu += `➤ *${i}*\n`)
             })
         })
-        m.reply(menu + 'ketik !kuis [mapel] [materi] \n\ncontoh penggunaan: \n!kuis matwajib fungsi_linear ')
+        m.reply(menu + '\nketik !kuis [mapel] [materi] \n\ncontoh penggunaan: \n!kuis matwajib fungsi_linear ')
         return
     }
     else if(m.body.startsWith('!list materi')) {
         const mapelMateri = m.body.split(' ')[2]
         bot.materi(mtr => {
             const materiList = mtr.find(i => i.mapel == mapelMateri)
+            if(!materiList){m.reply('materi dari mapel _*' + mapelMateri + '*_ tidak ditemukan, ketik !list kuis menu untuk memilih mapel dan materi yang tersedia'); return}
             const {mapel, materi} = materiList
-            let menu =  `*MAPEL: ${mapel}\n`
-            materi.forEach(m => menu += `${m}\n\n`)
+            let menu =  `*MAPEL*: *${mapel}*\n`
+            materi.forEach(m => menu += `➤ *${m}*\n`)
             console.log(menu)
-            m.reply(menu + 'ketik !kuis [mapel] [materi] \n\ncontoh penggunaan: \n!kuis matwajib fungsi_linear')
+            m.reply(menu + '\nketik !kuis [mapel] [materi] \n\ncontoh penggunaan: \n!kuis matwajib fungsi_linear')
         })
         return
     }
