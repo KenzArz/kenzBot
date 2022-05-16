@@ -17,7 +17,7 @@ client.on('message', async m => {
     
     if(m.from == '6289530016712@c.us' || '62838914059445'){
         const pr = await bot.createPr()
-        const {addPr, listPr, findMapel, findMapelBYDeadline, removePr} = pr
+        const {addPr, listPr, findPr, removePr, editPr} = pr
         
             if(m.body == 'pr help'){
                 m.reply(`daftar menu untuk pr \n\n[!pr] [mapel] [tugas] [halaman] [deadline] [id] \nuntuk menambahkan pr baru \n\n[!list pr] \nuntuk menampilkan seluruh pr yang masih ada \n\n[!cari pr] \nmencari pr berdasarkan mapel \n\n[!deadline] \nmencari pr berdasarkan deadline \n\n [!rm pr] [prefik mapel/id] [mapel/id] \nmenghapus berdasarkan mapel/id \n\n\nmasukan command tanpa menggunakan simbol []\n\n*NOTE*: jangan menambahkan spasi pada [mapel]/[tugas]/[id] karna akan mengacaukan cara kerja bot.\ncontoh penggunaan: *_pr matwajib fungsi_linear 19 rabu tugas_matminat01_* \n\njika menghapus pr bedasarkan mapelnya, perlu diingat bahwa menghapus berdasarkan mapel akan menghapus seluruh pr yang mempunyai mapel yang sama`);
@@ -32,16 +32,15 @@ client.on('message', async m => {
                 return
             }
             else if(m.body.startsWith('cari pr ')){
-                findMapel(m).then(i => m.reply(i))
-                return
-            }
-            else if(m.body.startsWith('deadline')){
-                findMapelBYDeadline(m).then(i => m.reply(i))
+                findPr(m).then(i => m.reply(i))
                 return
             }
             else if(m.body.startsWith('rm pr')){
                 removePr(m).then(i => m.reply(i))
                 return
+            }
+            else if(m.body.startsWith('edit pr')){
+                editPr(m).then(i => m.reply(i))
             }
 
 
@@ -81,6 +80,8 @@ client.on('message', async m => {
             const file = JSON.parse(fs.readFileSync(filePath))            
             
             if(image){
+                const duplicated = file.find(m => m.image == getsoal)
+                if(duplicated){m.reply('nama file sudah ada, silahkan masukan nama file lain'); return}
                 const folder = `${dirPath}/image`
                 if(!fs.existsSync(folder)){fs.mkdirSync(folder)}
                 base64.writeImageSync(`${folder}/${getsoal}`, `data:image/jpeg;base64,${image.data}`)

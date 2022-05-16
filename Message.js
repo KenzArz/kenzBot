@@ -61,7 +61,7 @@ class Bot {
             if(!id){
                 return 'silahkan masuka data pr secara detail dengan urutan [mapel] [tugas] [halaman] [deadline] [id]'
             }
-            const setPr = {mapel, tugas, hal, deadline, id}
+            const setPr = {mapel, tugas, hal, deadline, id, status: "not completed"}
             pr.push(setPr)
             fs.writeFileSync('school/pr.json',JSON.stringify(pr))
             return 'data berhasil ditambahkan'
@@ -78,15 +78,18 @@ class Bot {
 ➪ *HALAMAN: ${m.hal}*
 ➪ *DEADLINE: ${m.deadline}*
 ➪ *ID: ${m.id}*
+➪ *STATUS: ${m.status}*
 
 └──────────────➤ ${(pr.length -1) == i ? '' : '\n\n\n'}`)
             return listPr
         }
-        const findMapel = async m => {
+        const findPr = async m => {
             if(daftarPr){return 'tidak ada pr'}
 
-            const mapel = m.body.split(' ')[2]
-            const listPr = pr.filter(m => m.mapel == mapel)
+            const data = m.body.slice(8) 
+            const body = data.split(' ')
+            const [prefik, mapel] = body
+            const listPr = pr.filter(m => m[prefik] == mapel)
             let Pr = ''
             listPr.forEach((m,i) => Pr+= `*「${m.mapel}」*
             
@@ -96,42 +99,40 @@ class Bot {
 ➪ *HALAMAN: ${m.hal}*
 ➪ *DEADLINE: ${m.deadline}*
 ➪ *ID: ${m.id}*
-            
-└──────────────➤ ${(listPr.length -1) == i ? '' : '\n\n\n'}`)
-            return Pr
-        }
-        const findMapelBYDeadline = async m => {
-            if(daftarPr){return 'tidak ada pr'}
-
-            const deadline = m.body.split(' ')[1]
-            const listPr = pr.filter(m => m.deadline == deadline)
-            let Pr = ''
-            listPr.forEach((m,i)=> Pr+= `*「${m.mapel}」*
-            
-┌──────────────➤
-            
-➪ *TUGAS: ${m.tugas}*
-➪ *HALAMAN: ${m.hal}*
-➪ *DEADLINE: ${m.deadline}*
-➪ *ID: ${m.id}*
+➪ *STATUS: ${m.status}*
             
 └──────────────➤ ${(listPr.length -1) == i ? '' : '\n\n\n'}`)
             return Pr
         }
         const removePr = async m => {
-            if(daftarPr){m.reply('tidak ada pr');return}
+            if(daftarPr)return'tidak ada pr'
 
             const rm = m.body.slice(6)
             const [prefik, data] = rm.split(' ')
 
             const rmPr = pr.find(m => m[prefik].toLowerCase() == data.toLowerCase())
-            if(!rmPr){m.reply('mapel atau id tidak ditemukan'); return}
+            if(!rmPr)return 'mapel atau id tidak ditemukan'
             const addPr = pr.filter(m => m[prefik].toLowerCase() !== data.toLowerCase())
             
             fs.writeFileSync('school/pr.json', JSON.stringify(addPr))
-            m.reply('pr berhasil dihapus')
+            return 'pr berhasil dihapus'
         }
-        return {addPr, listPr, findMapel, findMapelBYDeadline, removePr}
+        const editPr = async m => {
+            if(daftarPr)return 'tidak ada pr'
+
+            const body = m.body.slice(8)
+            const editStatus = body.split(' - ')
+            const [mapelId , data , status] = editStatus
+
+            const file = pr.find(m => m[mapelId] == data)
+            const findStatus = pr.filter(m => m[mapelId] !== data)
+            file.status = status
+            findStatus.push(file)
+            fs.writeFileSync('school/pr.json', JSON.stringify(findStatus))
+            return 'pr berhasil diedit'
+
+        }
+        return {addPr, listPr, findPr, removePr, editPr}
     }
 
     
