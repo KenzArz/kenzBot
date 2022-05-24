@@ -27,12 +27,8 @@ client.on('message', async m => {
                 addPr(m).then(i => m.reply(i))
                 return
             }
-            else if(m.body == 'list pr') {
+            else if(m.body.startsWith('list pr')) {
                 listPr(m).then(i => m.reply(i))
-                return
-            }
-            else if(m.body.startsWith('cari pr ')){
-                findPr(m).then(i => m.reply(i))
                 return
             }
             else if(m.body.startsWith('rm pr')){
@@ -53,14 +49,17 @@ client.on('message', async m => {
             //menghapus "add kuis"
             const kuis = m.body.slice(9)
             // mengubah string menjadi array
-            const body = kuis.split(' - ')
-            const qt = await m.getQuotedMessage()
+            const body = kuis.split(' -- ')
             let image;
             if(m.hasMedia || m.hasQuotedMsg){
                 image = await dwl.download(m)
             }
             const [getmapel, getmateri, getsoal, getjawaban] = body
             if(!getjawaban){m.reply('silahkan masuka data kuis secara detail dengan urutan [mapel] [materi] [soal] [jawaban]'); return}
+
+            getmapel.split(' ')[1] ? m.reply('mapel tidak boleh menggunakan') : ''
+            getmateri.split(' ')[1] ? m.reply('materi tidak boleh mnggunakan spasi') : ''
+
 
             // membuat objek baru
             const addKuis = await bot.addKuis(getmapel)
@@ -71,14 +70,14 @@ client.on('message', async m => {
             // membuat folder baru dari getmapel di folder Mapel dan file baru dari getmateri
             await bot.createQuizFile(getmapel, getmateri)
 
+            //string yang menuju materi dari mapel yang sudah di pilih user
             const dirPath = `Mapel/${getmapel}/${getmateri}`
-            
             
             const filePath = `${dirPath}/${getmateri}.json`
 
-            //membaca file dari getmapel/getmateri yang sudah dibuat 
-            const file = JSON.parse(fs.readFileSync(filePath))            
-            
+            //membaca file dari getmapel/getmateri yang sudah dibuat
+            const file = JSON.parse(fs.readFileSync(filePath))
+
             if(image){
                 const duplicated = file.find(m => m.image == getsoal)
                 if(duplicated){m.reply('nama file sudah ada, silahkan masukan nama file lain'); return}
@@ -126,20 +125,22 @@ client.on('message', async m => {
         const chat = await m.getChat()   
         const img = await dwl.download(m)
 
-        //SEARCH ALL DATA
-        if(m.body == '!searchall'){
-            const srcImg = await wibu.searchNimeAll(img.data)
-            const {search, adult, hanime} = srcImg
-            if(adult){m.reply(adult); m.reply(hanime, '6283891059445@c.us')}
-            chat.sendMessage(search); return
-        }
-
-        // SEARCH ONE DATA
-        const srcImg = await wibu.searchNime(img.data)
-        const media = await MessageMedia.fromUrl(srcImg.image)
-        if(srcImg.adult){ m.reply(srcImg.adult); m.reply(media, '6283891059445@c.us',{caption: srcImg.result});return}
-        chat.sendMessage(media, {caption: srcImg.result})
-        return
+        try{
+            //SEARCH ALL DATA
+            if(m.body == '!searchall'){
+                const srcImg = await wibu.searchNimeAll(img.data)
+                const {search, adult, hanime} = srcImg
+                if(adult){m.reply(adult); m.reply(hanime, '6283891059445@c.us')}
+                chat.sendMessage(search); return
+            }
+    
+            // SEARCH ONE DATA
+            const srcImg = await wibu.searchNime(img.data)
+            const media = await MessageMedia.fromUrl(srcImg.image)
+            if(srcImg.adult){ m.reply(srcImg.adult); m.reply(media, '6283891059445@c.us',{caption: srcImg.result});return}
+            chat.sendMessage(media, {caption: srcImg.result})
+            return
+        }catch(e){console.log(e)}
     }
 
     //DOWNLOAD VIDEO YOUTUBE MENJADI MP3
@@ -197,7 +198,6 @@ client.on('message', async m => {
             const {mapel, materi} = materiList
             let menu =  `*MAPEL*: *${mapel}*\n`
             materi.forEach(m => menu += `➤ *${m}*\n`)
-            console.log(menu)
             m.reply(menu + '\nketik !kuis [mapel] [materi] \n\ncontoh penggunaan: \n!kuis matwajib fungsi_linear')
         })
         return
@@ -207,6 +207,7 @@ client.on('message', async m => {
 
         const chat = await m.getChat()
         const get = map.get(m.from)
+        if(!get.skor){return}
         const startKuis = await bot.starKuis(get.task, m)
 
         if(m.body == '!exit'){chat.sendMessage('kuis telah diberhentikan. Terimakasih sudah mengerjakan kuis'); map.delete(m.from);return}
@@ -215,14 +216,16 @@ client.on('message', async m => {
 
         if(startKuis.task === undefined){chat.sendMessage('kuis telah selesai. Terimakasih sudah mengerjakan kuis'); map.delete(m.from); return}
 
-        if(startKuis.task.image){
-            const media = MessageMedia.fromFilePath(startKuis.task.image)
-            chat.sendMessage(media)
-        }
-        const sections = [{title: 'judul', rows: [{title: 'a'}, {title: 'b'},{title: 'c'},{title: 'd'},{title: 'e'}]}]
-        const list = new List(`${startKuis.task.soal  || 'soal berupa image'} `, 'jawaban', sections, `*SOAL ${++get.soal}*`, 'KenzBot')
-        chat.sendMessage(list)
-        return
+        setTimeout(async () => {
+            if(startKuis.task.image){
+                const media = MessageMedia.fromFilePath(startKuis.task.image)
+                chat.sendMessage(media)
+            }
+            const sections = [{title: 'judul', rows: [{title: 'a'}, {title: 'b'},{title: 'c'},{title: 'd'},{title: 'e'}]}]
+            const list = new List(`${startKuis.task.soal  || 'soal berupa image'} `, 'jawaban', sections, `*SOAL ${++get.soal}*`, 'KenzBot')
+            await chat.sendMessage(list)
+            return
+        },2000)
     }
 
 })

@@ -53,8 +53,7 @@ class Bot {
         const pr = await this.pr()
         const daftarPr = pr.length == 0
         const addPr = async m => {
-            const body = m.body.split(' ')
-            const [, mapel, tugas, hal, deadline, id] = body
+            const [, mapel, tugas, hal, deadline, id] = m.body.split(' -- ')
             if(!mapel){
                 return 'masukan pr dengan urutan [mapel] [tugas] [halaman] [deadline] [id] \n\nmasukan pr tanpa menggunakan simbol []'
             }
@@ -66,41 +65,26 @@ class Bot {
             fs.writeFileSync('school/pr.json',JSON.stringify(pr))
             return 'data berhasil ditambahkan'
         }
-        const listPr = async () => {
-            if(daftarPr){return 'tidak ada pr'}
-
-            let listPr = ''
-            pr.forEach((m,i) => listPr += `*「${m.mapel}」*
-            
-┌──────────────➤
-
-➪ *TUGAS: ${m.tugas}*
-➪ *HALAMAN: ${m.hal}*
-➪ *DEADLINE: ${m.deadline}*
-➪ *ID: ${m.id}*
-➪ *STATUS: ${m.status}*
-
-└──────────────➤ ${(pr.length -1) == i ? '' : '\n\n\n'}`)
-            return listPr
-        }
-        const findPr = async m => {
+        const listPr = async m => {
             if(daftarPr){return 'tidak ada pr'}
 
             const data = m.body.slice(8) 
-            const body = data.split(' ')
-            const [prefik, mapel] = body
-            const listPr = pr.filter(m => m[prefik] == mapel)
+            const [prefik, mapel] =  data.split(' -- ')
+            if(prefik && !mapel){return 'harap masukan sertakan mapel setelah detail \n\n*contoh*: \nlist pr id _[id dari pr]_'}
+            const listPr = pr.filter(m =>  m[prefik] == mapel)
+            if(listPr.length == 0){return `pr dari ${prefik} ${mapel} tidak ditemukan`}
             let Pr = ''
-            listPr.forEach((m,i) => Pr+= `*「${m.mapel}」*
+
+            listPr.forEach((m,i) => Pr += `*「${m.mapel}」*
             
 ┌──────────────➤
-            
+
 ➪ *TUGAS: ${m.tugas}*
 ➪ *HALAMAN: ${m.hal}*
 ➪ *DEADLINE: ${m.deadline}*
 ➪ *ID: ${m.id}*
 ➪ *STATUS: ${m.status}*
-            
+
 └──────────────➤ ${(listPr.length -1) == i ? '' : '\n\n\n'}`)
             return Pr
         }
@@ -108,7 +92,7 @@ class Bot {
             if(daftarPr)return'tidak ada pr'
 
             const rm = m.body.slice(6)
-            const [prefik, data] = rm.split(' ')
+            const [prefik, data] = rm.split(' -- ')
 
             const rmPr = pr.find(m => m[prefik].toLowerCase() == data.toLowerCase())
             if(!rmPr)return 'mapel atau id tidak ditemukan'
@@ -121,18 +105,19 @@ class Bot {
             if(daftarPr)return 'tidak ada pr'
 
             const body = m.body.slice(8)
-            const editStatus = body.split(' - ')
-            const [mapelId , data , status] = editStatus
+            const [mapelId , data , status] =  body.split(' -- ')
+            
 
             const file = pr.find(m => m[mapelId] == data)
+            if(!file){return 'pr tidak ditemukan'}
             const findStatus = pr.filter(m => m[mapelId] !== data)
-            file.status = status
+            file[prefik] = status
             findStatus.push(file)
             fs.writeFileSync('school/pr.json', JSON.stringify(findStatus))
             return 'pr berhasil diedit'
 
         }
-        return {addPr, listPr, findPr, removePr, editPr}
+        return {addPr, listPr, removePr, editPr}
     }
 
     
@@ -232,22 +217,17 @@ class Bot {
      * 
      * @param {SoalKuis} soal 
      * @param {WWebjs} m 
-     * @returns {Promise<{user: noTLPUser, task: soalKuis, answer: boolean}>}
+     * @returns {Promise<{task: soalKuis, quiz: boolean}>}
      */
     async starKuis( soal, m) {
         const kuis = map.get(m.from)
         let answQuis
-        if(m.body.startsWith('!',[0]) || Number(m.body)){
+        if(m.body.startsWith('!kuis')){
             map.set(m.from, {task: soal()})
             return map.get(m.from)
         }
-        else if(kuis.task.jawaban.startsWith(m.body, [0])){
-            answQuis = '*BENAR*' 
-        }
-        else if(!kuis.task.jawaban.startsWith(m.body, [0])){
-            answQuis = '*SALAH*'
-        }
-
+        kuis.task.jawaban.startsWith(m.body, [0]) ? answQuis = '*BENAR*' : answQuis = '*SALAH*'
+        
         map.delete(m.from)
         map.set(m.from, {task: soal(), quiz: answQuis})
         return map.get(m.from)
