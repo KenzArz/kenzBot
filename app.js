@@ -43,7 +43,7 @@ client.on('message', async m => {
         // MENAMBAHKAN KUIS BARU
         if(m.body.startsWith('add kuis')){
             if(m.body == 'add kuis help'){
-                m.reply('cara menambahkan kuis: \n\n[mapel]\ndi isi dengan nama mapel \n\n[materi]\nmateri dari mapel \n\n[soal]\nsoal yang ingin ditambahkan\n\n[jawaban]\njawaban dari kuis \n\n*_cara penggunaan_*: \nadd kuis matwajib - fungsi linear - 1 + 1 = \na. 10\nb.11\nc.2\nd.1\ne.semua jawaban benar - c <--(itu jawaban)')
+                m.reply('cara menambahkan kuis: \n\n[mapel]\ndi isi dengan nama mapel \n\n[materi]\nmateri dari mapel \n\n[soal]\nsoal yang ingin ditambahkan\n\n[jawaban]\njawaban dari kuis \n\n*_cara penggunaan_*: \nadd kuis matwajib - fungsi linear - 1 + 1 = \na. 10\nb.11\nc.2\nd.1\ne.semua jawaban benar - c <--(itu jawaban) -- [nama dari gambar kalo ada] <-- opsional')
                 return
             }
             //menghapus "add kuis"
@@ -54,10 +54,10 @@ client.on('message', async m => {
             if(m.hasMedia || m.hasQuotedMsg){
                 image = await dwl.download(m)
             }
-            const [getmapel, getmateri, getsoal, getjawaban] = body
+            const [getmapel, getmateri, getsoal, getjawaban, picture] = body
             if(!getjawaban){m.reply('silahkan masuka data kuis secara detail dengan urutan [mapel] [materi] [soal] [jawaban]'); return}
 
-            getmapel.split(' ')[1] ? m.reply('mapel tidak boleh menggunakan') : ''
+            getmapel.split(' ')[1] ? m.reply('mapel tidak boleh menggunakan spasi') : ''
             getmateri.split(' ')[1] ? m.reply('materi tidak boleh mnggunakan spasi') : ''
 
 
@@ -77,18 +77,20 @@ client.on('message', async m => {
 
             //membaca file dari getmapel/getmateri yang sudah dibuat
             const file = JSON.parse(fs.readFileSync(filePath))
+            console.log(image)
 
             if(image){
                 const duplicated = file.find(m => m.image == getsoal)
                 if(duplicated){m.reply('nama file sudah ada, silahkan masukan nama file lain'); return}
+                else if(!picture){return m.reply('masukan nama file dahulu')}
                 const folder = `${dirPath}/image`
                 if(!fs.existsSync(folder)){fs.mkdirSync(folder)}
-                base64.writeImageSync(`${folder}/${getsoal}`, `data:image/jpeg;base64,${image.data}`)
+                base64.writeImageSync(`${folder}/${picture}`, `data:image/jpeg;base64,${image.data}`)
             }
 
             // lalu menambahkan soal dari getsoal dan jawaban dari getjawaban
 
-            file.push({soal: image ? undefined : getsoal, jawaban: getjawaban, image: image ? `${dirPath}/image/${getsoal}.jpeg` : undefined})
+            file.push({soal: getsoal == 'image only' ? undefined : getsoal, jawaban: getjawaban, image: image ? `${dirPath}/image/${picture}.jpeg` : undefined})
 
             // dan menulis kembali isi file dari getmapel/getmateri yang sudah dibuat
             fs.writeFileSync(filePath, JSON.stringify(file))
@@ -207,7 +209,8 @@ client.on('message', async m => {
 
         const chat = await m.getChat()
         const get = map.get(m.from)
-        if(!get.skor){return}
+        console.log(get)
+        // if(!get.skor){return}
         const startKuis = await bot.starKuis(get.task, m)
 
         if(m.body == '!exit'){chat.sendMessage('kuis telah diberhentikan. Terimakasih sudah mengerjakan kuis'); map.delete(m.from);return}
@@ -216,6 +219,7 @@ client.on('message', async m => {
 
         if(startKuis.task === undefined){chat.sendMessage('kuis telah selesai. Terimakasih sudah mengerjakan kuis'); map.delete(m.from); return}
 
+        console.log(startKuis.task)
         setTimeout(async () => {
             if(startKuis.task.image){
                 const media = MessageMedia.fromFilePath(startKuis.task.image)

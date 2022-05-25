@@ -105,7 +105,7 @@ class Bot {
             if(daftarPr)return 'tidak ada pr'
 
             const body = m.body.slice(8)
-            const [mapelId , data , status] =  body.split(' -- ')
+            const [mapelId , data, prefik, status] =  body.split(' -- ')
             
 
             const file = pr.find(m => m[mapelId] == data)
