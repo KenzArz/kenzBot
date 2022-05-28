@@ -217,7 +217,7 @@ class Bot {
      * 
      * @param {SoalKuis} soal 
      * @param {WWebjs} m 
-     * @returns {Promise<{task: soalKuis, quiz: boolean}>}
+     * @returns {Promise<{task: soalKuis, quiz: boolean, jawaban: jawabanSoal}>}
      */
     async starKuis( soal, m) {
         const kuis = map.get(m.from)
@@ -226,10 +226,11 @@ class Bot {
             map.set(m.from, {task: soal()})
             return map.get(m.from)
         }
-        kuis.task.jawaban.toLowerCase().startsWith(m.body.toLowerCase(), [0]) ? answQuis = '*BENAR*' : answQuis = '*SALAH*'
+        const jawaban = kuis.task.jawaban.toLowerCase()
+        jawaban.startsWith(m.body.toLowerCase(), [0]) ? answQuis = '*BENAR*' : answQuis = '*SALAH*'
         
         map.delete(m.from)
-        map.set(m.from, {task: soal(), quiz: answQuis})
+        map.set(m.from, {task: soal(), quiz: answQuis, jawaban})
         return map.get(m.from)
     }
 
