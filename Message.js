@@ -226,7 +226,7 @@ class Bot {
             map.set(m.from, {task: soal()})
             return map.get(m.from)
         }
-        kuis.task.jawaban.startsWith(m.body, [0]) ? answQuis = '*BENAR*' : answQuis = '*SALAH*'
+        kuis.task.jawaban.toLowerCase().startsWith(m.body.toLowerCase(), [0]) ? answQuis = '*BENAR*' : answQuis = '*SALAH*'
         
         map.delete(m.from)
         map.set(m.from, {task: soal(), quiz: answQuis})

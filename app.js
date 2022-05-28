@@ -14,10 +14,10 @@ const base64 = require('ba64');
 let kuis;
 
 client.on('message', async m => {
-    
+
     if(m.from == '6289530016712@c.us' || '62838914059445'){
         const pr = await bot.createPr()
-        const {addPr, listPr, findPr, removePr, editPr} = pr
+        const {addPr, listPr, removePr, editPr} = pr
         
             if(m.body == 'pr help'){
                 m.reply(`daftar menu untuk pr \n\n[!pr] [mapel] [tugas] [halaman] [deadline] [id] \nuntuk menambahkan pr baru \n\n[!list pr] \nuntuk menampilkan seluruh pr yang masih ada \n\n[!cari pr] \nmencari pr berdasarkan mapel \n\n[!deadline] \nmencari pr berdasarkan deadline \n\n [!rm pr] [prefik mapel/id] [mapel/id] \nmenghapus berdasarkan mapel/id \n\n\nmasukan command tanpa menggunakan simbol []\n\n*NOTE*: jangan menambahkan spasi pada [mapel]/[tugas]/[id] karna akan mengacaukan cara kerja bot.\ncontoh penggunaan: *_pr matwajib fungsi_linear 19 rabu tugas_matminat01_* \n\njika menghapus pr bedasarkan mapelnya, perlu diingat bahwa menghapus berdasarkan mapel akan menghapus seluruh pr yang mempunyai mapel yang sama`);
@@ -178,8 +178,11 @@ client.on('message', async m => {
             })
             m.reply(`berikut daftar materi yang tersedia untuk kuis ${body}: \n\n${getDetail} \n*contoh penggunaan*:\n!kuis matWajib fungsi linear`); return
         }
-        map.set(m.from, await bot.kuis( body, detail)) 
+        bot.kuis( body, detail)
+            .then(bot => map.set(m.from, bot) )
+            .catch(e => m.reply('*error!*\nkemungkinan nama file tidak tersedia'))
     }
+
     else if(m.body == '!list kuis menu'){
         let menu = 'daftar mapel dan materi: \n'
         bot.materi(mtr => {
@@ -209,8 +212,6 @@ client.on('message', async m => {
 
         const chat = await m.getChat()
         const get = map.get(m.from)
-        console.log(get)
-        // if(!get.skor){return}
         const startKuis = await bot.starKuis(get.task, m)
 
         if(m.body == '!exit'){chat.sendMessage('kuis telah diberhentikan. Terimakasih sudah mengerjakan kuis'); map.delete(m.from);return}
@@ -219,12 +220,11 @@ client.on('message', async m => {
 
         if(startKuis.task === undefined){chat.sendMessage('kuis telah selesai. Terimakasih sudah mengerjakan kuis'); map.delete(m.from); return}
 
-        console.log(startKuis.task)
+        if(startKuis.task.image){
+            const media = MessageMedia.fromFilePath(startKuis.task.image)
+            chat.sendMessage(media)
+        }
         setTimeout(async () => {
-            if(startKuis.task.image){
-                const media = MessageMedia.fromFilePath(startKuis.task.image)
-                chat.sendMessage(media)
-            }
             const sections = [{title: 'judul', rows: [{title: 'a'}, {title: 'b'},{title: 'c'},{title: 'd'},{title: 'e'}]}]
             const list = new List(`${startKuis.task.soal  || 'soal berupa image'} `, 'jawaban', sections, `*SOAL ${++get.soal}*`, 'KenzBot')
             await chat.sendMessage(list)
