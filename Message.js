@@ -53,7 +53,8 @@ class Bot {
         const pr = await this.pr()
         const daftarPr = pr.length == 0
         const addPr = async m => {
-            const [, mapel, tugas, hal, deadline, id] = m.body.split(' -- ')
+            const data = m.body.slice(3)
+            const [mapel, tugas, hal, deadline, id] = data
             if(!mapel){
                 return 'masukan pr dengan urutan [mapel] [tugas] [halaman] [deadline] [id] \n\nmasukan pr tanpa menggunakan simbol []'
             }
@@ -70,7 +71,7 @@ class Bot {
 
             const data = m.body.slice(8) 
             const [prefik, mapel] =  data.split(' -- ')
-            if(prefik && !mapel){return 'harap masukan sertakan mapel setelah detail \n\n*contoh*: \nlist pr id _[id dari pr]_'}
+            if(prefik && !mapel){return 'harap masukan sertakan mapel setelah detail \n\n*contoh*: \nlist pr -- id -- _[id dari pr]_'}
             const listPr = pr.filter(m =>  m[prefik] == mapel)
             if(listPr.length == 0){return `pr dari ${prefik} ${mapel} tidak ditemukan`}
             let Pr = ''
@@ -93,6 +94,8 @@ class Bot {
 
             const rm = m.body.slice(6)
             const [prefik, data] = rm.split(' -- ')
+            if(!prefik)return 'masukan id atau yang lainya untuk menghapus pr'
+            else if(!data)return 'masukan nama mapel yang ingin dihapus'
 
             const rmPr = pr.find(m => m[prefik].toLowerCase() == data.toLowerCase())
             if(!rmPr)return 'mapel atau id tidak ditemukan'
@@ -107,6 +110,10 @@ class Bot {
             const body = m.body.slice(8)
             const [mapelId , data, prefik, status] =  body.split(' -- ')
             
+            if(!mapelId)return 'tambahkan kata \'id\' atau yang lainya untuk mencari pr yang ingin diedit pr'
+            else if(!data)return 'masukan nama id atau yang lainnya yang ingin diedit'
+            else if(!prefik)return 'tambahkan kata \'id\' atau yang lainya untuk mengedit pr berdasarkan id atau yang lainnya'
+            else if(!status)return 'masukan data yang ingin anda ubah'
 
             const file = pr.find(m => m[mapelId] == data)
             if(!file){return 'pr tidak ditemukan'}

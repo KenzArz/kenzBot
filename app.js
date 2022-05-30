@@ -217,9 +217,10 @@ client.on('message', async m => {
         if(m.body == '!exit'){chat.sendMessage('kuis telah diberhentikan. Terimakasih sudah mengerjakan kuis'); map.delete(m.from);return}
 
         const boolean = startKuis.quiz
-        if(boolean)
+        if(boolean){
         boolean == '*BENAR*' ? m.reply(`${startKuis.quiz} \nskor : ${++get.skor}`) : m.reply(`${startKuis.quiz} \nskor : ${get.skor}`)
         chat.sendMessage(startKuis.jawaban)
+        }
         
 
         if(startKuis.task === undefined){chat.sendMessage('kuis telah selesai. Terimakasih sudah mengerjakan kuis'); map.delete(m.from); return}
