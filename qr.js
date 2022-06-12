@@ -18,6 +18,7 @@ const client = new Client({authStrategy: Id, puppeteer: { headless: false, args:
     ]}});
 
 client.on('authenticated', () => {console.log('AUTHENTICATED')});
+client.on('qr', qr => qrcode.generate(qr, {small: true}))
 client.on('ready', () => console.log('connected... \nand this a massage from the user: '));
 
 module.exports.client = client

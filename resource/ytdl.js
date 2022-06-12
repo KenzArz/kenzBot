@@ -24,6 +24,7 @@ async function ytmp3 (vid, m, link) {
             .pipe(fs.createWriteStream(filePath))
             .on('finish', () => resolve(filePath))
     })
+  console.log(media)
     return {media, filePath}
 }
 

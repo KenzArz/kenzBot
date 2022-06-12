@@ -11,7 +11,7 @@ const fs = require('fs');
 const base64 = require('ba64');
 
 
-let kuis;
+let arr = [];
 
 client.on('message', async m => {
 
@@ -77,7 +77,6 @@ client.on('message', async m => {
 
             //membaca file dari getmapel/getmateri yang sudah dibuat
             const file = JSON.parse(fs.readFileSync(filePath))
-            console.log(image)
 
             if(image){
                 const duplicated = file.find(m => m.image == getsoal)
@@ -99,14 +98,27 @@ client.on('message', async m => {
         }
     }
 
+if (m.body === '!quoteinfo' && m.hasQuotedMsg) {
+  arr.forEach(i => i.delete(true) )
+        const quotedMsg = await m.getQuotedMessage();
+
+        quotedMsg.reply(`
+            ID: ${quotedMsg.id._serialized}
+            Type: ${quotedMsg.type}
+            Author: ${quotedMsg.author || quotedMsg.from}
+            Timestamp: ${quotedMsg.timestamp}
+            Has Media? ${quotedMsg.hasMedia}
+        `)};
+  
     // TEST SINYAL
     if (m.body == '!ping') {
         const contact = await m.getContact()
         const chat = await m.getChat()
         const msg = await bot.ping(["halo", "kenapa", "hadir", "ada yang bisa dibantu"])
-        await chat.sendMessage(`${msg} @${contact.id.user}`, {
+        const msgg = await chat.sendMessage(`${msg} @${contact.id.user}`, {
             mentions: [contact]
-        });
+        })
+          arr.push(msgg)
         return
     };
     //INVIT BOT
@@ -178,9 +190,14 @@ client.on('message', async m => {
             })
             m.reply(`berikut daftar materi yang tersedia untuk kuis ${body}: \n\n${getDetail} \n*contoh penggunaan*:\n!kuis matWajib fungsi linear`); return
         }
-        bot.kuis( body, detail)
-            .then(bot => map.set(m.from, bot) )
-            .catch(e => m.reply('*error!*\nkemungkinan nama file tidak tersedia'))
+      try {
+        const kuis = await bot.kuis( body, detail)
+        map.set(m.from, kuis)
+      } 
+      catch (error) {
+        m.reply('*error!*\nkemungkinan nama file tidak tersedia')
+      }
+          
     }
 
     else if(m.body == '!list kuis menu'){
@@ -218,24 +235,22 @@ client.on('message', async m => {
 
         const boolean = startKuis.quiz
         if(boolean){
-        boolean == '*BENAR*' ? m.reply(`${startKuis.quiz} \nskor : ${++get.skor}`) : m.reply(`${startKuis.quiz} \nskor : ${get.skor}`)
-        chat.sendMessage(startKuis.jawaban)
+        boolean == '*BENAR*' ? m.reply(`${startKuis.quiz} \nskor : ${++get.skor}`) : m.reply(`${startKuis.quiz} \nskor : ${get.skor}`);
+        const answerMsg = await chat.sendMessage("*JAWABAN*\n"+startKuis.jawaban);
+          
         }
         
-
         if(startKuis.task === undefined){chat.sendMessage('kuis telah selesai. Terimakasih sudah mengerjakan kuis'); map.delete(m.from); return}
 
         if(startKuis.task.image){
             const media = MessageMedia.fromFilePath(startKuis.task.image)
-            chat.sendMessage(media)
+            const mediaMsg = await chat.sendMessage(media)
         }
         setTimeout(async () => {
-            const sections = [{title: 'judul', rows: [{title: 'a'}, {title: 'b'},{title: 'c'},{title: 'd'},{title: 'e'}]}]
-            const list = new List(`${startKuis.task.soal  || 'soal berupa image'} `, 'jawaban', sections, `*SOAL ${++get.soal}*`, 'KenzBot')
-            await chat.sendMessage(list)
+          const kuisMsg = await chat.sendMessage(`*SOAL ${++get.soal}*\n\n${startKuis.task.soal  || 'soal berupa image'} `)
             return
         },2000)
-    }
+          } 
+    })
 
-})
 client.initialize().catch(e => console.log(chalk ` {red ${e}}`));

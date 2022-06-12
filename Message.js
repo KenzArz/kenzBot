@@ -54,7 +54,7 @@ class Bot {
         const daftarPr = pr.length == 0
         const addPr = async m => {
             const data = m.body.slice(3)
-            const [mapel, tugas, hal, deadline, id] = data
+            const [mapel, tugas, hal, deadline, id] = data.split(' -- ')
             if(!mapel){
                 return 'masukan pr dengan urutan [mapel] [tugas] [halaman] [deadline] [id] \n\nmasukan pr tanpa menggunakan simbol []'
             }
@@ -217,7 +217,7 @@ class Bot {
             file.splice(res, 1)
             return seed
         }
-        return {task, skor, soal: skor}
+        return {task, skor, soal: skor, msg: []}
     }
 
     /**
